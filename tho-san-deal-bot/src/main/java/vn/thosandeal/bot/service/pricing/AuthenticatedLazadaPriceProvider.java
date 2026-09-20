@@ -237,6 +237,11 @@ public class AuthenticatedLazadaPriceProvider implements ProductPriceProvider {
                     resolvedPrices.put(skuId, LazadaSkuPrice.salePriceOnly(
                             skuId, variantName, salePrice, true, stock, parsed.errorMessage()));
                     previewsDone++;
+
+                    if (parsed.errorMessage() != null && parsed.errorMessage().contains("LZD_BUY_RENDER_PC_000")) {
+                        log.info("Lazada PC checkout render unsupported for item {}. Using PDP sale prices for remaining SKUs.", itemId);
+                        break;
+                    }
                 }
             } catch (Exception e) {
                 log.warn("Error checking SKU {} for item {}: {}", skuId, itemId, e.getMessage());
