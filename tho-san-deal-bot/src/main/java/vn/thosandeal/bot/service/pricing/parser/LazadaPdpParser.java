@@ -116,9 +116,12 @@ public class LazadaPdpParser {
                     String propPath = skuNode.path("propPath").asText("");
                     String variantName = resolveVariantName(propPath, propValueMap);
 
-                    // Check availability from skuInfos
+                    // Check availability and price from skuInfos
                     boolean available = true;
                     Integer stock = null;
+                    BigDecimal skuSalePrice = defaultPrice;
+                    BigDecimal skuOriginalPrice = defaultPrice;
+
                     JsonNode skuInfo = skuInfosNode.path(skuId);
                     if (!skuInfo.isMissingNode()) {
                         boolean disabled = skuInfo.path("operation").path("disable").asBoolean(false);
@@ -129,14 +132,37 @@ public class LazadaPdpParser {
                                 available = false;
                             }
                         }
+
+                        JsonNode priceNode = skuInfo.path("price");
+                        if (!priceNode.isMissingNode()) {
+                            if (priceNode.has("salePrice")) {
+                                JsonNode sp = priceNode.path("salePrice");
+                                if (sp.has("value") && !sp.path("value").isNull()) {
+                                    try {
+                                        skuSalePrice = new BigDecimal(sp.path("value").asText());
+                                    } catch (Exception ignored) {}
+                                }
+                            }
+                            if (priceNode.has("originalPrice")) {
+                                JsonNode op = priceNode.path("originalPrice");
+                                if (op.has("value") && !op.path("value").isNull()) {
+                                    try {
+                                        skuOriginalPrice = new BigDecimal(op.path("value").asText());
+                                    } catch (Exception ignored) {}
+                                }
+                            }
+                        }
                     }
+
+                    BigDecimal finalSalePrice = skuSalePrice != null ? skuSalePrice : defaultPrice;
+                    BigDecimal finalOriginalPrice = skuOriginalPrice != null ? skuOriginalPrice : finalSalePrice;
 
                     skuSnapshots.add(new LazadaSkuSnapshot(
                             skuId,
                             null,
                             variantName,
-                            defaultPrice,
-                            defaultPrice,
+                            finalSalePrice,
+                            finalOriginalPrice,
                             stock,
                             available
                     ));
@@ -150,8 +176,26 @@ public class LazadaPdpParser {
                     while (keys.hasNext()) {
                         String k = keys.next();
                         if (!"0".equals(k)) {
+                            JsonNode skuInfo = skuInfosNode.path(k);
+                            BigDecimal sPrice = defaultPrice;
+                            BigDecimal oPrice = defaultPrice;
+                            if (skuInfo.has("price")) {
+                                JsonNode pn = skuInfo.path("price");
+                                if (pn.has("salePrice") && pn.path("salePrice").has("value")) {
+                                    try {
+                                        sPrice = new BigDecimal(pn.path("salePrice").path("value").asText());
+                                    } catch (Exception ignored) {}
+                                }
+                                if (pn.has("originalPrice") && pn.path("originalPrice").has("value")) {
+                                    try {
+                                        oPrice = new BigDecimal(pn.path("originalPrice").path("value").asText());
+                                    } catch (Exception ignored) {}
+                                }
+                            }
+                            BigDecimal fSale = sPrice != null ? sPrice : defaultPrice;
+                            BigDecimal fOrig = oPrice != null ? oPrice : fSale;
                             skuSnapshots.add(new LazadaSkuSnapshot(
-                                    k, null, "Phân loại " + k, defaultPrice, defaultPrice, null, true
+                                    k, null, "Phân loại " + k, fSale, fOrig, null, true
                             ));
                         }
                     }
