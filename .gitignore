@@ -1,0 +1,12 @@
+.env
+secrets/
+*.session.json
+target/
+.idea/
+.vscode/
+*.iml
+*.log
+*.exe
+cloudflared.exe
+scratch/
+scratch_*

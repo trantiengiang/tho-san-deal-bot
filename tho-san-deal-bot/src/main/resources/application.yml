@@ -1,0 +1,85 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: tho-san-deal-bot
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 30000
+      max-lifetime: 60000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+        format_sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+    validate-on-migrate: true
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+telegram:
+  bot-token: ${TELEGRAM_BOT_TOKEN}
+  webhook-secret: ${TELEGRAM_WEBHOOK_SECRET}
+  notification-channel-id: ${TELEGRAM_NOTIFICATION_CHANNEL_ID}
+  allowed-user-ids: ${TELEGRAM_ALLOWED_USER_IDS:}
+
+app:
+  scheduling:
+    enabled: ${APP_SCHEDULING_ENABLED:true}
+
+pricing:
+  provider: ${PRICING_PROVIDER:mock}
+  check-interval-ms: ${PRICE_CHECK_INTERVAL_MS:60000}
+  outbox-interval-ms: ${NOTIFICATION_OUTBOX_INTERVAL_MS:15000}
+  lazada:
+    session-encryption-key-base64: ${LAZADA_SESSION_ENCRYPTION_KEY_BASE64:}
+    requests-per-second: ${LAZADA_REQUESTS_PER_SECOND:1}
+    challenge-cooldown-minutes: ${LAZADA_CHALLENGE_COOLDOWN_MINUTES:30}
+    min-preview-interval-seconds: ${LAZADA_MIN_PREVIEW_INTERVAL_SECONDS:5}
+    max-previews-per-cycle: ${LAZADA_MAX_PREVIEWS_PER_CYCLE:3}
+    exact-price-ttl-minutes: ${LAZADA_EXACT_PRICE_TTL_MINUTES:15}
+
+mock:
+  final-price: ${MOCK_FINAL_PRICE:1490000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    vn.thosandeal.bot: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+    org.flywaydb: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
