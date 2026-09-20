@@ -102,6 +102,9 @@ public class DealNotificationService {
     }
 
     private String resolveTargetChatId(WatchItem watchItem) {
+        if (telegramProperties.notificationChannelId() != null && !telegramProperties.notificationChannelId().isBlank()) {
+            return telegramProperties.notificationChannelId();
+        }
         try {
             if (watchItem != null && watchItem.getUser() != null && watchItem.getUser().getTelegramUserId() != null) {
                 return String.valueOf(watchItem.getUser().getTelegramUserId());
@@ -146,6 +149,11 @@ public class DealNotificationService {
             sb.append("🎨 <b>Phân loại:</b> ").append(TelegramHtmlEscaper.escapeTruncated(variantName, 100)).append("\n");
         }
 
+        String userTag = resolveUserTag(watchItem);
+        if (userTag != null) {
+            sb.append("👤 <b>Người theo dõi:</b> ").append(userTag).append("\n");
+        }
+
         sb.append("\n💰 <b>Giá ưu đãi:</b> ").append(priceFormatted).append("\n");
         sb.append("🎯 <b>Giá đang canh:</b> ").append(targetFormatted).append("\n");
         sb.append("📉 <b>Thấp hơn mục tiêu:</b> ").append(diffFormatted).append("\n");
@@ -172,6 +180,11 @@ public class DealNotificationService {
             sb.append("🎨 ").append(TelegramHtmlEscaper.escapeTruncated(result.variantName(), 100)).append("\n");
         }
 
+        String userTag = resolveUserTag(watchItem);
+        if (userTag != null) {
+            sb.append("👤 <b>Người theo dõi:</b> ").append(userTag).append("\n");
+        }
+
         sb.append("\n💰 <b>Giá hiện tại:</b>\n");
         sb.append(priceFormatted).append("\n");
         sb.append("\n🎯 <b>Giá đang canh:</b>\n");
@@ -182,6 +195,24 @@ public class DealNotificationService {
         sb.append(url);
 
         return sb.toString();
+    }
+
+    private String resolveUserTag(WatchItem watchItem) {
+        if (watchItem == null || watchItem.getUser() == null) {
+            return null;
+        }
+        try {
+            String username = watchItem.getUser().getUsername();
+            if (username != null && !username.isBlank()) {
+                return "@" + TelegramHtmlEscaper.escape(username);
+            }
+            String firstName = watchItem.getUser().getFirstName();
+            if (firstName != null && !firstName.isBlank()) {
+                return TelegramHtmlEscaper.escape(firstName);
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
     private String resolveProductName(String resultName, WatchItem watchItem) {
