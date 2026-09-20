@@ -47,13 +47,18 @@ public class LazadaSessionImportRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        if (!args.containsOption(OPTION_NAME)) {
+        String optionName = null;
+        if (args.containsOption(OPTION_NAME)) {
+            optionName = OPTION_NAME;
+        } else if (args.containsOption("import-session")) {
+            optionName = "import-session";
+        } else {
             return;
         }
 
-        List<String> values = args.getOptionValues(OPTION_NAME);
+        List<String> values = args.getOptionValues(optionName);
         if (values == null || values.isEmpty() || values.get(0).isBlank()) {
-            System.err.println("Error: Missing file path for --" + OPTION_NAME);
+            System.err.println("Error: Missing file path for --" + optionName);
             exitWithCode(1);
             return;
         }
