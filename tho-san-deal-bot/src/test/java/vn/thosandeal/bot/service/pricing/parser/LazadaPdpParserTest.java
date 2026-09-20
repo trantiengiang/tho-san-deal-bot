@@ -137,13 +137,65 @@ class LazadaPdpParserTest {
     }
 
     @Test
-    @DisplayName("Malformed PDP HTML missing bootstrap data falls back safely")
-    void testMalformedHtmlFallback() {
-        String html = "<html><head><title>Sản phẩm lỗi</title></head><body>No module data</body></html>";
+    @DisplayName("Parse multi-SKU PDP with per-SKU prices extracts salePrice and originalPrice correctly")
+    void testParseMultiSkuWithPrices() {
+        String moduleDataJson = """
+                {
+                    "data": {
+                        "root": {
+                            "fields": {
+                                "product": {
+                                    "itemId": "13359117023",
+                                    "title": "Bàn Phím Cơ AULA"
+                                },
+                                "tracking": {
+                                    "pdt_price": "4.059.000 ₫"
+                                },
+                                "productOption": {
+                                    "skuBase": {
+                                        "properties": [],
+                                        "skus": [
+                                            { "skuId": "116854801732", "propPath": "" },
+                                            { "skuId": "116854801734", "propPath": "" }
+                                        ]
+                                    }
+                                },
+                                "skuInfos": {
+                                    "116854801732": {
+                                        "stock": 10,
+                                        "operation": { "disable": false },
+                                        "price": {
+                                            "originalPrice": { "value": 4059000 },
+                                            "salePrice": { "value": 1690000 }
+                                        }
+                                    },
+                                    "116854801734": {
+                                        "stock": 5,
+                                        "operation": { "disable": false },
+                                        "price": {
+                                            "originalPrice": { "value": 4058000 },
+                                            "salePrice": { "value": 1927000 }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                """;
+
+        String html = createSamplePdpHtml(moduleDataJson);
         LazadaProductSnapshot snapshot = parser.parse(html);
 
-        assertThat(snapshot).isNotNull();
-        assertThat(snapshot.productName()).isEqualTo("Sản phẩm lỗi");
-        assertThat(snapshot.skus()).isEmpty();
+        assertThat(snapshot.skus()).hasSize(2);
+        LazadaSkuSnapshot sku1 = snapshot.skus().get(0);
+        assertThat(sku1.skuId()).isEqualTo("116854801732");
+        assertThat(sku1.salePrice()).isEqualByComparingTo(new BigDecimal("1690000"));
+        assertThat(sku1.originalPrice()).isEqualByComparingTo(new BigDecimal("4059000"));
+
+        LazadaSkuSnapshot sku2 = snapshot.skus().get(1);
+        assertThat(sku2.skuId()).isEqualTo("116854801734");
+        assertThat(sku2.salePrice()).isEqualByComparingTo(new BigDecimal("1927000"));
+        assertThat(sku2.originalPrice()).isEqualByComparingTo(new BigDecimal("4058000"));
     }
 }
