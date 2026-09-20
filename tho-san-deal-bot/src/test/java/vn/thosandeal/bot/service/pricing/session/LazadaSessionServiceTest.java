@@ -32,11 +32,39 @@ class LazadaSessionServiceTest {
     @BeforeEach
     void setUp() {
         sessionRepository = mock(LazadaSessionRepository.class);
+        when(sessionRepository.save(any(LazadaSession.class))).thenAnswer(i -> {
+            LazadaSession s = i.getArgument(0);
+            if (s.getId() == null) s.setId(1L);
+            return s;
+        });
         byte[] key32 = new byte[32];
         new SecureRandom().nextBytes(key32);
         cryptoService = new SessionCryptoService(key32);
         objectMapper = new ObjectMapper();
         sessionService = new LazadaSessionService(sessionRepository, cryptoService, objectMapper);
+    }
+
+    @Test
+    @DisplayName("Import session with cookieString parses cookies correctly")
+    void testImportSessionWithCookieString(@TempDir Path tempDir) throws IOException {
+        Path file = tempDir.resolve("session_string.json");
+        Files.writeString(file, """
+                {
+                    "version": 1,
+                    "cookieString": "lzd_sid=sid_123; lzd_uid=uid_456; cna=cna_789; _tb_token_=tb_abc; extra=xyz"
+                }
+                """);
+
+        LazadaSession session = sessionService.importSessionFromFile(file);
+        assertThat(session).isNotNull();
+        assertThat(session.getAccountId()).isEqualTo("uid_456");
+        assertThat(session.getStatus()).isEqualTo(LazadaSessionStatus.ACTIVE);
+
+        when(sessionRepository.findFirstByOrderByIdDesc()).thenReturn(Optional.of(session));
+        Optional<String> headerOpt = sessionService.getActiveSessionCookieHeader();
+        assertThat(headerOpt).isPresent();
+        assertThat(headerOpt.get()).contains("lzd_sid=sid_123");
+        assertThat(headerOpt.get()).contains("_tb_token_=tb_abc");
     }
 
     @Test

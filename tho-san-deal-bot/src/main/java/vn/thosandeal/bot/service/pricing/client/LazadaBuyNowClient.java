@@ -34,7 +34,7 @@ public class LazadaBuyNowClient {
     public LazadaBuyNowClient(
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,
-            @Value("${pricing.lazada.user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36}") String userAgent,
+            @Value("${pricing.lazada.user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36}") String userAgent,
             @Value("${pricing.lazada.requests-per-second:1}") double requestsPerSecond) {
         this.objectMapper = objectMapper;
         this.userAgent = userAgent;

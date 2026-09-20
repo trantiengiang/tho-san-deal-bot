@@ -19,6 +19,7 @@ public class LazadaSessionPayload {
 
     private Integer version;
     private Map<String, String> cookies;
+    private String cookieString;
 
     public void validate() {
         if (version == null) {
@@ -27,8 +28,25 @@ public class LazadaSessionPayload {
         if (version != 1) {
             throw new IllegalArgumentException("Unsupported session payload version: " + version + ". Supported version: 1");
         }
-        if (cookies == null || cookies.isEmpty()) {
-            throw new IllegalArgumentException("Session payload is missing 'cookies' object");
+        if (cookies == null) {
+            cookies = new HashMap<>();
+        }
+        if (cookieString != null && !cookieString.isBlank()) {
+            for (String pair : cookieString.split(";")) {
+                String trimmed = pair.trim();
+                if (trimmed.isEmpty()) continue;
+                int eqIdx = trimmed.indexOf('=');
+                if (eqIdx > 0) {
+                    String name = trimmed.substring(0, eqIdx).trim();
+                    String val = trimmed.substring(eqIdx + 1).trim();
+                    if (!name.isEmpty()) {
+                        cookies.put(name, val);
+                    }
+                }
+            }
+        }
+        if (cookies.isEmpty()) {
+            throw new IllegalArgumentException("Session payload is missing 'cookies' or 'cookieString'");
         }
         String[] required = {"lzd_sid", "lzd_uid", "cna"};
         for (String key : required) {
