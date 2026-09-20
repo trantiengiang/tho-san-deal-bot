@@ -157,6 +157,9 @@ public class LazadaPdpParser {
                     BigDecimal finalSalePrice = skuSalePrice != null ? skuSalePrice : defaultPrice;
                     BigDecimal finalOriginalPrice = skuOriginalPrice != null ? skuOriginalPrice : finalSalePrice;
 
+                    log.info("Parsed SKU {} variant='{}' salePrice={} originalPrice={}",
+                            skuId, variantName, finalSalePrice, finalOriginalPrice);
+
                     skuSnapshots.add(new LazadaSkuSnapshot(
                             skuId,
                             null,

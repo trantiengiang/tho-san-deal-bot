@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LazadaPdpClient {
 
     private static final Logger log = LoggerFactory.getLogger(LazadaPdpClient.class);
-    private static final Duration CACHE_TTL = Duration.ofMinutes(5);
+    private static final Duration CACHE_TTL = Duration.ofMinutes(1);
 
     private final WebClient webClient;
     private final LazadaPdpParser pdpParser;
@@ -62,7 +62,7 @@ public class LazadaPdpClient {
         String cacheKey = productUrl != null ? productUrl.trim() : "";
         CachedSnapshot cached = cache.get(cacheKey);
         if (cached != null && Instant.now().isBefore(cached.expiresAt())) {
-            log.debug("Reusing cached PDP snapshot for {}", cacheKey);
+            log.info("Reusing cached PDP snapshot for {}", cacheKey);
             return cached.snapshot();
         }
 
