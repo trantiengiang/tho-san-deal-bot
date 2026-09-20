@@ -60,10 +60,15 @@ public class LazadaBuyNowClient {
             itemMap.put("itemId", itemId);
             itemMap.put("skuId", skuId);
             itemMap.put("quantity", 1);
-            itemMap.put("attributes", null);
-
             Map<String, Object> buyParams = Collections.singletonMap("items", Collections.singletonList(itemMap));
             String buyParamsJson = objectMapper.writeValueAsString(buyParams);
+
+            org.springframework.util.MultiValueMap<String, String> formData = new org.springframework.util.LinkedMultiValueMap<>();
+            formData.add("buyParams", buyParamsJson);
+            String tbToken = extractTbToken(cookieHeader);
+            if (tbToken != null && !tbToken.isBlank()) {
+                formData.add("_tb_token_", tbToken);
+            }
 
             log.debug("Calling Lazada checkout preview for itemId={} skuId={}", itemId, skuId);
 
@@ -84,7 +89,7 @@ public class LazadaBuyNowClient {
                     .header("Origin", "https://www.lazada.vn")
                     .header(HttpHeaders.COOKIE, cookieHeader != null ? cookieHeader : "")
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .body(BodyInserters.fromFormData("buyParams", buyParamsJson))
+                    .body(BodyInserters.fromFormData(formData))
                     .retrieve()
                     .bodyToMono(String.class)
                     .timeout(Duration.ofSeconds(10))
@@ -119,5 +124,16 @@ public class LazadaBuyNowClient {
             }
         }
         lastRequestTime.set(System.currentTimeMillis());
+    }
+
+    private String extractTbToken(String cookieHeader) {
+        if (cookieHeader == null || cookieHeader.isBlank()) return null;
+        for (String pair : cookieHeader.split(";")) {
+            String[] parts = pair.trim().split("=", 2);
+            if (parts.length == 2 && "_tb_token_".equalsIgnoreCase(parts[0].trim())) {
+                return parts[1].trim();
+            }
+        }
+        return null;
     }
 }
